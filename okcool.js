@@ -1,5 +1,5 @@
 var http = require('http')
-require('lodash')
+var _ = require('lodash')
 
 module.exports = class OkCool {
 
@@ -18,12 +18,19 @@ module.exports = class OkCool {
     this.response = response
      
     this.params.thing = 'world'
-    
+
     this.response.writeHead(200, { "Content-type": "text/plain" });
     this.response.end(this[this.route()].apply(this));
   }
   
   route() {
+    let routes = this.getAllFuncs(this)
+    routes = _.filter(routes, (r) => r.startsWith('/'))
+    
+    let deconstructedRoutes = _.map(routes, (r) => _.filter(r.split('/'), (r) => r != ''))
+    console.log(deconstructedRoutes)
+
+
     console.log(this.request.url)
     return '/hello'
   }
