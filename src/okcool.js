@@ -1,37 +1,46 @@
 const ws = require('uWebSockets.js')
+const OkCoolLetsGo = require('okcool-letsgo')
 
 module.exports = class OkCool {
 
-  constructor() {
-    determineRoutes()
+  constructor(options = {port: 3000}) {
+    this.options = options
+    this.router = new OkCoolLetsGo()
+    this.determineRoutes()
+    this.registerRoutes()
 
     this.server = ws.App({})
     
     this.server.any('/*', this.handleRequest.bind(this))
 
-    this.server.listen(3000, function(listenSocket) {
+    this.server.listen(this.options.port, function(listenSocket) {
         console.log('OkCool, listening on 3000')
     })
   }
 
-  handleRequest(request, response) {
+  handleRequest(response, request) {
+
     this.request = request
     this.response = response
     this.setDefaultHeaders()
     
-    let route = findRoute(this.request.url)
+    console.log(this.request.getUrl())
     
-    this.params = route.params
+    let route = this.findRoute(this.request.getUrl())
     
-    output = this[route.value].apply(this)
-    
-    this.writeHeaders()
-    this.response.end(output);
+    if (route) {
+      this.params = route.params
+      
+      let output = route.action.apply(this)
+      
+      this.writeHeaders()
+      this.response.end(output);      
+    }
   }
   
   setDefaultHeaders() {
     this.headers = {
-      'Content-Type', 'text/html'
+      'Content-Type': 'text/html'
     }
   }
   
@@ -46,28 +55,34 @@ module.exports = class OkCool {
   }
   
   determineRoutes() {
-    var routes = []; 
-    do {
-      let prop = Object.getOwnPropertyNames(obj);
-      if (prop.startsWith('/') || 
-          prop.startsWith('GET') || 
-          prop.startsWith('POST') || 
-          prop.startsWith('PUT') || 
-          prop.startsWith('DELETE') || 
-          prop.startsWith('PATCH')
-        ) {
-            routes.concat(prop)
-          }
-    } while (obj = Object.getPrototypeOf(this));
+    var routes = []
+    var obj = this
     
+    do {
+      let prop = Object.getOwnPropertyNames(obj)
+      prop.forEach((p) => {
+        if (p.startsWith('/') || 
+            p.startsWith('GET') || 
+            p.startsWith('POST') || 
+            p.startsWith('PUT') || 
+            p.startsWith('DELETE') || 
+            p.startsWith('PATCH')
+          ) {
+              routes.push(p)
+        }
+      })
+        
+    } while (obj = Object.getPrototypeOf(obj))
     this.routes = routes
   }
   
   registerRoutes() {
-    
+    this.routes.forEach((r) => {
+      this.router.add(r, this[r])
+    })
   }
   
-  findRoute() {
-    return {value: '/', params: {}}
+  findRoute(route) {
+    return this.router.find(route)
   }
 }
