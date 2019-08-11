@@ -2,14 +2,13 @@
   "name": "okcool",
   "version": "0.0.1",
   "description": "",
-  "main": "okcool.js",
+  "main": "src/okcool.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "lodash": "^4.17.14"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#binaries"
   }
 }
